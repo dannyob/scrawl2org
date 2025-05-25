@@ -62,8 +62,7 @@ clean:
 
 # Install the executable globally using uv tool (force reinstall)
 install-tool:
-	uv tool uninstall scrawl2org 2>/dev/null || true
-	uv tool install .
+	uv tool install --force --reinstall .
 
 # Uninstall the tool
 uninstall-tool:
