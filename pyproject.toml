@@ -1,6 +1,6 @@
 [project]
 name = "scrawl2org"
-version = "0.1.0"
+version = "0.2.0"
 description = "Extract PDF pages as images and store in SQLite database"
 authors = [
     {name = "Danny O'Brien", email = "danny@spesh.com"},
