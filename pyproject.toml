@@ -1,0 +1,25 @@
+[project]
+name = "scrawl2org"
+version = "0.1.0"
+description = "Extract PDF pages as images and store in SQLite database"
+authors = [
+    {name = "Danny O'Brien", email = "danny@spesh.com"},
+]
+dependencies = [
+    "pymupdf>=1.23.0",
+    "click>=8.1.0",
+]
+requires-python = ">=3.8"
+
+[project.scripts]
+scrawl2org = "scrawl2org.main:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.uv]
+dev-dependencies = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+]
