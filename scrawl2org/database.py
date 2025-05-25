@@ -105,8 +105,8 @@ class Database:
                 return cursor.lastrowid
             else:
                 conn.execute(
-                    "UPDATE pdf_files SET file_hash = ?, last_processed = ? WHERE id = ?",
-                    (current_hash, now, pdf_file_id)
+                    "UPDATE pdf_files SET filename = ?, file_hash = ?, last_processed = ? WHERE id = ?",
+                    (basename, current_hash, now, pdf_file_id)
                 )
                 return pdf_file_id
     
