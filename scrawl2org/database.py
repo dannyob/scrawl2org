@@ -71,11 +71,12 @@ class Database:
             pdf_file_id is None if file is new
         """
         current_hash = self.get_file_hash(filename)
+        basename = Path(filename).name
         
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.execute(
                 "SELECT id, file_hash FROM pdf_files WHERE filename = ?",
-                (filename,)
+                (basename,)
             )
             row = cursor.fetchone()
             
@@ -92,13 +93,14 @@ class Database:
             The pdf_file_id of the updated/inserted record
         """
         current_hash = self.get_file_hash(filename)
+        basename = Path(filename).name
         now = datetime.now()
         
         with sqlite3.connect(self.db_path) as conn:
             if pdf_file_id is None:
                 cursor = conn.execute(
                     "INSERT INTO pdf_files (filename, file_hash, last_processed) VALUES (?, ?, ?)",
-                    (filename, current_hash, now)
+                    (basename, current_hash, now)
                 )
                 return cursor.lastrowid
             else:

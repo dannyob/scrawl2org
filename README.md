@@ -66,7 +66,7 @@ The tool creates two tables:
 
 ### `pdf_files`
 - `id`: Primary key
-- `filename`: Full path to PDF file
+- `filename`: Base filename of PDF file (no path)
 - `file_hash`: SHA-256 hash of PDF content
 - `last_processed`: Timestamp of last processing
 

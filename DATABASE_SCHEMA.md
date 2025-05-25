@@ -8,7 +8,7 @@ Tracks PDF files and their metadata for change detection.
 | Column | Type | Description |
 |--------|------|-------------|
 | `id` | INTEGER PRIMARY KEY | Auto-incrementing unique identifier |
-| `filename` | TEXT NOT NULL UNIQUE | Full path to the PDF file |
+| `filename` | TEXT NOT NULL UNIQUE | Base filename of the PDF file (no path) |
 | `file_hash` | TEXT NOT NULL | SHA-256 hash of the PDF file content |
 | `last_processed` | TIMESTAMP | When this file was last processed |
 
