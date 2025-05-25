@@ -4,7 +4,7 @@ import sqlite3
 import hashlib
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Optional, Tuple, List
 
 
 class Database:
@@ -153,3 +153,64 @@ class Database:
                 (pdf_file_id, current_page_count)
             )
             conn.commit()
+    
+    def get_pdf_file_id(self, filename: str) -> Optional[int]:
+        """Get PDF file ID by filename.
+        
+        Args:
+            filename: Name of the PDF file (basename only)
+            
+        Returns:
+            PDF file ID if found, None otherwise
+        """
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.execute(
+                "SELECT id FROM pdf_files WHERE filename = ?",
+                (filename,)
+            )
+            row = cursor.fetchone()
+            return row[0] if row else None
+    
+    def get_page_image(self, pdf_file_id: int, page_number: int) -> Optional[bytes]:
+        """Get page image data by PDF file ID and page number.
+        
+        Args:
+            pdf_file_id: PDF file ID
+            page_number: Page number (0-based)
+            
+        Returns:
+            Image data as bytes if found, None otherwise
+        """
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.execute(
+                "SELECT image_data FROM page_images WHERE pdf_file_id = ? AND page_number = ?",
+                (pdf_file_id, page_number)
+            )
+            row = cursor.fetchone()
+            return row[0] if row else None
+    
+    def list_pdf_files(self) -> List[str]:
+        """List all PDF files in the database.
+        
+        Returns:
+            List of PDF filenames
+        """
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.execute("SELECT filename FROM pdf_files ORDER BY filename")
+            return [row[0] for row in cursor.fetchall()]
+    
+    def get_page_count(self, pdf_file_id: int) -> int:
+        """Get the number of pages stored for a PDF file.
+        
+        Args:
+            pdf_file_id: PDF file ID
+            
+        Returns:
+            Number of pages stored
+        """
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.execute(
+                "SELECT COUNT(*) FROM page_images WHERE pdf_file_id = ?",
+                (pdf_file_id,)
+            )
+            return cursor.fetchone()[0]
