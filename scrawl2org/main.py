@@ -45,7 +45,10 @@ from .processor import PDFProcessor
     "--height", type=int, help="Display height in terminal cells (Kitty only)"
 )
 @click.option(
-    "--use-llm-ocr", is_flag=True, help="Enable LLM-based OCR for text extraction"
+    "--use-llm-ocr", is_flag=True, help="Enable LLM-based OCR for text extraction (default: enabled)"
+)
+@click.option(
+    "--no-llm-ocr", is_flag=True, help="Disable LLM-based OCR, use stub implementation"
 )
 @click.option(
     "--llm-model",
@@ -65,6 +68,7 @@ def main(
     width: int,
     height: int,
     use_llm_ocr: bool,
+    no_llm_ocr: bool,
     llm_model: str,
 ):
     """Extract PDF pages as images and store in SQLite database.
@@ -78,16 +82,25 @@ def main(
         scrawl2org document.pdf -e 1 --width 40    # Display with specific width
         scrawl2org document.pdf -e 1 -o page.png  # Extract page 1 to file
         scrawl2org document.pdf -e 1-3 -o pages.png # Extract pages 1-3 to numbered files
-        scrawl2org document.pdf --use-llm-ocr     # Process with LLM-based OCR
-        scrawl2org document.pdf --use-llm-ocr --llm-model claude-3-haiku # Use Claude for OCR
+        scrawl2org document.pdf                   # Process with LLM-based OCR (default)
+        scrawl2org document.pdf --llm-model claude-3-haiku # Use Claude for OCR
+        scrawl2org document.pdf --no-llm-ocr      # Disable LLM OCR, use stub
     """
     try:
         if kitty and no_kitty:
             click.echo("Error: Cannot specify both --kitty and --no-kitty", err=True)
             raise click.Abort()
 
-        # Set environment variables for LLM OCR if requested
-        if use_llm_ocr:
+        if use_llm_ocr and no_llm_ocr:
+            click.echo("Error: Cannot specify both --use-llm-ocr and --no-llm-ocr", err=True)
+            raise click.Abort()
+
+        # Set environment variables for LLM OCR configuration
+        # Default is to use LLM OCR unless explicitly disabled
+        if no_llm_ocr:
+            os.environ["SCRAWL2ORG_USE_LLM_OCR"] = "false"
+        else:
+            # LLM OCR is enabled by default, and also if explicitly requested
             os.environ["SCRAWL2ORG_USE_LLM_OCR"] = "true"
             os.environ["SCRAWL2ORG_LLM_MODEL"] = llm_model
 

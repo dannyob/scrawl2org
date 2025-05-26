@@ -24,7 +24,8 @@ def extract_text_from_image(
         Dictionary containing OCR results with at least a 'text' field
     """
     # Check if LLM OCR should be used (environment variable or configuration)
-    use_llm_ocr = os.getenv("SCRAWL2ORG_USE_LLM_OCR", "").lower() in (
+    # Default to True (use LLM OCR) unless explicitly disabled
+    use_llm_ocr = os.getenv("SCRAWL2ORG_USE_LLM_OCR", "true").lower() in (
         "true",
         "1",
         "yes",

@@ -6,6 +6,7 @@ from unittest.mock import patch
 from scrawl2org.ocr import _extract_text_stub, extract_text_from_image
 
 
+@patch.dict(os.environ, {"SCRAWL2ORG_USE_LLM_OCR": "false"})
 def test_extract_text_basic():
     """Test basic OCR text extraction (stub)."""
     image_data = b"fake png image data"
@@ -21,6 +22,7 @@ def test_extract_text_basic():
     assert "DEBUG STUB INFO" in result["text"]
 
 
+@patch.dict(os.environ, {"SCRAWL2ORG_USE_LLM_OCR": "false"})
 def test_extract_text_with_page_number():
     """Test OCR text extraction with page number."""
     image_data = b"fake png image data"
@@ -29,6 +31,7 @@ def test_extract_text_with_page_number():
     assert "Page 5" in result["text"]
 
 
+@patch.dict(os.environ, {"SCRAWL2ORG_USE_LLM_OCR": "false"})
 def test_extract_text_with_filename():
     """Test OCR text extraction with PDF filename."""
     image_data = b"fake png image data"
@@ -37,6 +40,7 @@ def test_extract_text_with_filename():
     assert "test.pdf" in result["text"]
 
 
+@patch.dict(os.environ, {"SCRAWL2ORG_USE_LLM_OCR": "false"})
 def test_extract_text_with_all_params():
     """Test OCR text extraction with all parameters."""
     image_data = b"fake png image data"
