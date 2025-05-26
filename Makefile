@@ -1,6 +1,6 @@
 # Makefile for scrawl2org
 
-.PHONY: install test test-coverage clean lint format help install-tool uninstall-tool install-dev
+.PHONY: install test test-coverage clean lint lint-fix format format-fix format-check help install-tool uninstall-tool install-dev setup-pre-commit
 
 # Default target
 help:
@@ -12,7 +12,11 @@ help:
 	@echo "  test          - Run unit tests"
 	@echo "  test-coverage - Run tests with coverage report"
 	@echo "  lint          - Run linting checks"
-	@echo "  format        - Format code"
+	@echo "  lint-fix      - Fix linting issues automatically"
+	@echo "  format        - Format code with ruff"
+	@echo "  format-fix    - Format and fix linting in one command"
+	@echo "  format-check  - Check formatting without making changes"
+	@echo "  setup-pre-commit - Install pre-commit hooks"
 	@echo "  clean         - Clean up build artifacts"
 	@echo "  help          - Show this help message"
 
@@ -32,22 +36,32 @@ test:
 test-coverage:
 	uv run pytest tests/ -v --cov=scrawl2org --cov-report=term-missing
 
-# Run linting (if ruff is available)
+# Run linting checks
 lint:
-	@if command -v ruff >/dev/null 2>&1; then \
-		uv run ruff check scrawl2org/; \
-		uv run ruff check tests/; \
-	else \
-		echo "ruff not available, skipping lint check"; \
-	fi
+	uv run ruff check scrawl2org/ tests/
 
-# Format code (if ruff is available)
+# Fix linting issues automatically where possible
+lint-fix:
+	uv run ruff check --fix scrawl2org/ tests/
+
+# Format code with ruff (replaces black + isort)
 format:
-	@if command -v ruff >/dev/null 2>&1; then \
-		uv run ruff format scrawl2org/; \
-		uv run ruff format tests/; \
+	uv run ruff format scrawl2org/ tests/
+
+# Format and fix linting in one command
+format-fix: format lint-fix
+
+# Check formatting without making changes
+format-check:
+	uv run ruff format --check scrawl2org/ tests/
+
+# Setup pre-commit hooks (optional)
+setup-pre-commit:
+	@if command -v pre-commit >/dev/null 2>&1; then \
+		pre-commit install; \
+		echo "Pre-commit hooks installed"; \
 	else \
-		echo "ruff not available, skipping formatting"; \
+		echo "pre-commit not available. Install with: pip install pre-commit"; \
 	fi
 
 # Clean up build artifacts
