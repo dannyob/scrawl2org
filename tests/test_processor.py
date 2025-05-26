@@ -179,3 +179,75 @@ def test_extract_page_image_invalid_page(mock_fitz, temp_db_path):
         processor.extract_page_image("dummy.pdf", 5)
 
     mock_doc.close.assert_called_once()
+
+
+@patch("scrawl2org.processor.extract_text_from_image")
+@patch("scrawl2org.processor.fitz")
+def test_process_page_stderr_output(
+    mock_fitz, mock_ocr, temp_db_path, sample_pdf, capsys
+):
+    """Test that processing a page outputs status to stderr."""
+    # Setup mocks
+    mock_doc = MagicMock()
+    mock_doc.name = sample_pdf
+    mock_doc.__len__.return_value = 1
+    mock_page = MagicMock()
+    mock_doc.__getitem__.return_value = mock_page
+    mock_pix = MagicMock()
+    mock_pix.tobytes.return_value = b"fake image data"
+    mock_page.get_pixmap.return_value = mock_pix
+    mock_fitz.open.return_value = mock_doc
+    mock_fitz.Matrix.return_value = MagicMock()
+
+    # Mock OCR with text result
+    mock_ocr.return_value = {"text": "Sample OCR text from page", "confidence": 0.9}
+
+    processor = PDFProcessor(temp_db_path)
+
+    # Process PDF and capture stderr using capsys
+    processor.process_pdf(sample_pdf, force_update=True)
+
+    # Get captured stderr (and stdout)
+    captured = capsys.readouterr()
+    stderr_output = captured.err
+
+    # Verify stderr contains processing status
+    assert "Page 1: processing..." in stderr_output
+    assert "Page 1: completed OCR" in stderr_output
+    assert "OCR text: Sample OCR text from page" in stderr_output
+
+
+@patch("scrawl2org.processor.extract_text_from_image")
+@patch("scrawl2org.processor.fitz")
+def test_process_page_stderr_no_text(
+    mock_fitz, mock_ocr, temp_db_path, sample_pdf, capsys
+):
+    """Test stderr output when OCR finds no text."""
+    # Setup mocks
+    mock_doc = MagicMock()
+    mock_doc.name = sample_pdf
+    mock_doc.__len__.return_value = 1
+    mock_page = MagicMock()
+    mock_doc.__getitem__.return_value = mock_page
+    mock_pix = MagicMock()
+    mock_pix.tobytes.return_value = b"fake image data"
+    mock_page.get_pixmap.return_value = mock_pix
+    mock_fitz.open.return_value = mock_doc
+    mock_fitz.Matrix.return_value = MagicMock()
+
+    # Mock OCR with empty text result
+    mock_ocr.return_value = {"text": "", "confidence": 0.0}
+
+    processor = PDFProcessor(temp_db_path)
+
+    # Process PDF and capture stderr using capsys
+    processor.process_pdf(sample_pdf, force_update=True)
+
+    # Get captured stderr
+    captured = capsys.readouterr()
+    stderr_output = captured.err
+
+    # Verify stderr shows no text detected
+    assert "Page 1: processing..." in stderr_output
+    assert "Page 1: completed OCR" in stderr_output
+    assert "OCR text: (no text detected)" in stderr_output

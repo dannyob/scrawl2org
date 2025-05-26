@@ -1,5 +1,6 @@
 """PDF processing and image extraction."""
 
+import sys
 from pathlib import Path
 
 import fitz  # PyMuPDF
@@ -76,13 +77,28 @@ class PDFProcessor:
                 print(f"  Page {page_num + 1}: unchanged, skipping")
                 return
 
+        # Print status update to stderr
+        print(f"  Page {page_num + 1}: processing...", file=sys.stderr)
+
         # Perform OCR on the image
         pdf_filename = Path(doc.name).name if hasattr(doc, "name") else "unknown.pdf"
         ocr_result = extract_text_from_image(image_data, page_num + 1, pdf_filename)
 
         # Store the image with OCR text
         self.db.store_page_image(pdf_file_id, page_num, image_data, ocr_result)
-        print(f"  Page {page_num + 1}: stored ({len(image_data)} bytes) with OCR text")
+
+        # Print completion status with OCR text to stderr
+        ocr_text = ocr_result.get("text", "").strip()
+        print(
+            f"  Page {page_num + 1}: completed OCR ({len(image_data)} bytes)",
+            file=sys.stderr,
+        )
+        if ocr_text:
+            # Truncate very long text for readability
+            display_text = ocr_text[:200] + "..." if len(ocr_text) > 200 else ocr_text
+            print(f"  OCR text: {display_text}", file=sys.stderr)
+        else:
+            print("  OCR text: (no text detected)", file=sys.stderr)
 
     def get_page_count(self, pdf_path: str) -> int:
         """Get the number of pages in a PDF file."""
