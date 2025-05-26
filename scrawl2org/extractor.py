@@ -4,6 +4,7 @@ import sys
 import re
 from typing import List, Set
 from .database import Database
+from .kitty_display import KittyImageDisplay
 
 
 class ImageExtractor:
@@ -66,15 +67,17 @@ class ImageExtractor:
         
         return page_numbers
     
-    def extract_pages(self, pdf_name: str, pages_str: str, output_path: str = None, format: str = 'png'):
+    def extract_pages(self, pdf_name: str, pages_str: str, output_path: str = None, display_options: dict = None):
         """Extract page images from database.
         
         Args:
             pdf_name: Name of PDF file (filename only, not full path)
             pages_str: Page specification string
             output_path: Output file path, or None for stdout
-            format: Output format (currently only 'png')
+            display_options: Dict with display options (force_kitty, no_kitty, width, height)
         """
+        if display_options is None:
+            display_options = {}
         # Parse page numbers
         page_numbers = self.parse_page_range(pages_str)
         
@@ -91,38 +94,57 @@ class ImageExtractor:
             if image_data is None:
                 raise ValueError(f"Page {page_num} not found for PDF: {pdf_name}")
             
-            self._output_image(image_data, output_path, page_num)
+            self._output_image(image_data, output_path, page_num, display_options)
         else:
             # Multiple pages
             if output_path is None:
-                raise ValueError("Multiple pages cannot be output to stdout (PNG files cannot be concatenated). Please specify an output file pattern with -o.")
-            
-            # Extract base name and extension for numbering
-            from pathlib import Path
-            output_path_obj = Path(output_path)
-            base_name = output_path_obj.stem
-            extension = output_path_obj.suffix or '.png'
-            parent_dir = output_path_obj.parent
-            
-            for page_num in sorted(page_numbers):
-                image_data = self.db.get_page_image(pdf_file_id, page_num - 1)  # Convert to 0-based
+                # Check if we can use Kitty protocol for inline display
+                force_kitty = display_options.get('force_kitty', False)
+                no_kitty = display_options.get('no_kitty', False)
+                should_use_kitty = force_kitty or (KittyImageDisplay.is_kitty_terminal() and not no_kitty)
                 
-                if image_data is None:
-                    print(f"Warning: Page {page_num} not found for PDF: {pdf_name}", file=sys.stderr)
-                    continue
+                if should_use_kitty:
+                    # Display multiple pages inline using Kitty protocol
+                    for page_num in sorted(page_numbers):
+                        image_data = self.db.get_page_image(pdf_file_id, page_num - 1)  # Convert to 0-based
+                        
+                        if image_data is None:
+                            print(f"Warning: Page {page_num} not found for PDF: {pdf_name}", file=sys.stderr)
+                            continue
+                        
+                        self._output_image(image_data, None, page_num, display_options)
+                else:
+                    raise ValueError("Multiple pages cannot be output to stdout (PNG files cannot be concatenated). Please specify an output file pattern with -o.")
+            else:
+                # Output to files - extract base name and extension for numbering
+                from pathlib import Path
+                output_path_obj = Path(output_path)
+                base_name = output_path_obj.stem
+                extension = output_path_obj.suffix or '.png'
+                parent_dir = output_path_obj.parent
                 
-                # Create numbered filename
-                numbered_filename = parent_dir / f"{base_name}_page{page_num:03d}{extension}"
-                self._output_image(image_data, str(numbered_filename), page_num)
+                for page_num in sorted(page_numbers):
+                    image_data = self.db.get_page_image(pdf_file_id, page_num - 1)  # Convert to 0-based
+                    
+                    if image_data is None:
+                        print(f"Warning: Page {page_num} not found for PDF: {pdf_name}", file=sys.stderr)
+                        continue
+                    
+                    # Create numbered filename
+                    numbered_filename = parent_dir / f"{base_name}_page{page_num:03d}{extension}"
+                    self._output_image(image_data, str(numbered_filename), page_num, display_options)
     
-    def _output_image(self, image_data: bytes, output_path: str = None, page_num: int = None):
+    def _output_image(self, image_data: bytes, output_path: str = None, page_num: int = None, display_options: dict = None):
         """Output image data to file or stdout.
         
         Args:
             image_data: PNG image data
             output_path: Output file path, or None for stdout
             page_num: Page number for logging (optional)
+            display_options: Dict with display options (force_kitty, no_kitty, width, height)
         """
+        if display_options is None:
+            display_options = {}
         if output_path:
             with open(output_path, 'wb') as f:
                 f.write(image_data)
@@ -131,5 +153,26 @@ class ImageExtractor:
             else:
                 print(f"Image written to: {output_path}", file=sys.stderr)
         else:
-            # Output to stdout
-            sys.stdout.buffer.write(image_data)
+            # Output to stdout - use Kitty image protocol if available
+            force_kitty = display_options.get('force_kitty', False)
+            no_kitty = display_options.get('no_kitty', False)
+            width = display_options.get('width')
+            height = display_options.get('height')
+            
+            should_use_kitty = force_kitty or (KittyImageDisplay.is_kitty_terminal() and not no_kitty)
+            
+            if should_use_kitty:
+                filename = f"page_{page_num}" if page_num else "image"
+                
+                if width or height:
+                    KittyImageDisplay.display_image_sized(image_data, width or 0, height or 0, filename)
+                else:
+                    KittyImageDisplay.display_image_inline(image_data, filename)
+                
+                if page_num:
+                    print(f"Page {page_num} displayed in terminal", file=sys.stderr)
+                else:
+                    print("Image displayed in terminal", file=sys.stderr)
+            else:
+                # Fallback to raw binary output
+                sys.stdout.buffer.write(image_data)

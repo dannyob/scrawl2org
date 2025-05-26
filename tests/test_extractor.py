@@ -127,7 +127,7 @@ def test_extract_pages_single_page(mock_output, temp_db_path):
     extractor.db.get_page_image.assert_called_once_with(1, 1)  # 0-based page number
     
     # Verify output
-    mock_output.assert_called_once_with(b'fake image data', "output.png", 2)
+    mock_output.assert_called_once_with(b'fake image data', "output.png", 2, {})
 
 
 def test_extract_pages_multiple_pages_stdout(temp_db_path):
@@ -160,9 +160,9 @@ def test_extract_pages_multiple_pages_to_files(mock_output, temp_db_path):
     
     # Verify output calls with numbered filenames
     expected_calls = [
-        (b'page1 data', 'output_page001.png', 1),
-        (b'page2 data', 'output_page002.png', 2), 
-        (b'page3 data', 'output_page003.png', 3)
+        (b'page1 data', 'output_page001.png', 1, {}),
+        (b'page2 data', 'output_page002.png', 2, {}), 
+        (b'page3 data', 'output_page003.png', 3, {})
     ]
     actual_calls = [call[0] for call in mock_output.call_args_list]
     assert actual_calls == expected_calls
@@ -205,12 +205,25 @@ def test_output_image_to_file(mock_stderr, mock_open):
     mock_file.write.assert_called_once_with(b'image data')
 
 
+@patch('scrawl2org.extractor.KittyImageDisplay.is_kitty_terminal', return_value=False)
 @patch('sys.stdout')
-def test_output_image_to_stdout(mock_stdout):
-    """Test outputting image to stdout."""
+def test_output_image_to_stdout(mock_stdout, mock_kitty_check):
+    """Test outputting image to stdout (non-Kitty terminal)."""
     extractor = ImageExtractor()
     mock_stdout.buffer = MagicMock()
     
     extractor._output_image(b'image data', None)
     
     mock_stdout.buffer.write.assert_called_once_with(b'image data')
+
+
+@patch('scrawl2org.extractor.KittyImageDisplay.display_image_inline')
+@patch('scrawl2org.extractor.KittyImageDisplay.is_kitty_terminal', return_value=True)
+@patch('sys.stderr')
+def test_output_image_to_kitty_terminal(mock_stderr, mock_kitty_check, mock_display):
+    """Test outputting image to stdout (Kitty terminal)."""
+    extractor = ImageExtractor()
+    
+    extractor._output_image(b'image data', None, 5)
+    
+    mock_display.assert_called_once_with(b'image data', 'page_5')
