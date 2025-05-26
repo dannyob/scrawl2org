@@ -51,3 +51,15 @@ ignore = [
 [tool.black]
 line-length = 88
 target-version = ['py38', 'py39', 'py310', 'py311']
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+filterwarnings = [
+    # Suppress harmless SWIG deprecation warnings from PyMuPDF
+    # See: https://github.com/pymupdf/PyMuPDF/issues/3931
+    "ignore:.*builtin type.*has no __module__ attribute.*:DeprecationWarning",
+    "ignore:.*type.*has no __module__ attribute.*:DeprecationWarning"
+]
