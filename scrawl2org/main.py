@@ -5,11 +5,13 @@ from pathlib import Path
 
 import click
 
+from . import __version__
 from .extractor import ImageExtractor
 from .processor import PDFProcessor
 
 
 @click.command()
+@click.version_option(version=__version__)
 @click.argument("pdf_file", type=click.Path(exists=True, path_type=Path))
 @click.option(
     "--database", "-d", default="scrawl2org.db", help="SQLite database file path"
