@@ -94,9 +94,8 @@ class PDFProcessor:
             file=sys.stderr,
         )
         if ocr_text:
-            # Truncate very long text for readability
-            display_text = ocr_text[:200] + "..." if len(ocr_text) > 200 else ocr_text
-            print(f"  OCR text: {display_text}", file=sys.stderr)
+            # Print the full OCR text without truncation
+            print(f"  OCR text: {ocr_text}", file=sys.stderr)
         else:
             print("  OCR text: (no text detected)", file=sys.stderr)
 

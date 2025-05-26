@@ -251,3 +251,46 @@ def test_process_page_stderr_no_text(
     assert "Page 1: processing..." in stderr_output
     assert "Page 1: completed OCR" in stderr_output
     assert "OCR text: (no text detected)" in stderr_output
+
+
+@patch("scrawl2org.processor.extract_text_from_image")
+@patch("scrawl2org.processor.fitz")
+def test_process_page_stderr_long_text(
+    mock_fitz, mock_ocr, temp_db_path, sample_pdf, capsys
+):
+    """Test that long OCR text is not truncated in stderr output."""
+    # Setup mocks
+    mock_doc = MagicMock()
+    mock_doc.name = sample_pdf
+    mock_doc.__len__.return_value = 1
+    mock_page = MagicMock()
+    mock_doc.__getitem__.return_value = mock_page
+    mock_pix = MagicMock()
+    mock_pix.tobytes.return_value = b"fake image data"
+    mock_page.get_pixmap.return_value = mock_pix
+    mock_fitz.open.return_value = mock_doc
+    mock_fitz.Matrix.return_value = MagicMock()
+
+    # Mock OCR with very long text result (over 200 characters)
+    long_text = "This is a very long text that should exceed 200 characters to test that the text is not truncated in the stderr output. " * 5
+    long_text = long_text.strip()  # Remove trailing space
+    mock_ocr.return_value = {"text": long_text, "confidence": 0.9}
+
+    processor = PDFProcessor(temp_db_path)
+
+    # Process PDF and capture stderr using capsys
+    processor.process_pdf(sample_pdf, force_update=True)
+
+    # Get captured stderr
+    captured = capsys.readouterr()
+    stderr_output = captured.err
+
+    # Verify stderr contains the full text without truncation
+    assert "Page 1: processing..." in stderr_output
+    assert "Page 1: completed OCR" in stderr_output
+    assert long_text in stderr_output
+    # Verify the text is longer than 200 characters to ensure our test is meaningful
+    assert len(long_text) > 200
+    # Check that the full text appears right after "OCR text: " without truncation
+    ocr_text_line = [line for line in stderr_output.split('\n') if line.strip().startswith('OCR text:')][0]
+    assert ocr_text_line == f"  OCR text: {long_text}"
