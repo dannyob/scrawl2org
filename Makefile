@@ -1,14 +1,11 @@
 # Makefile for scrawl2org
 
-.PHONY: install test test-coverage clean lint lint-fix format format-fix format-check help install-tool uninstall-tool install-dev setup-pre-commit
+.PHONY: install test test-coverage clean lint lint-fix format format-fix format-check help setup-pre-commit
 
 # Default target
 help:
 	@echo "Available targets:"
-	@echo "  install       - Install the package using uv"
-	@echo "  install-dev   - Install with development dependencies"
-	@echo "  install-tool  - Install globally as uv tool (force reinstall)"
-	@echo "  uninstall-tool - Uninstall the global tool"
+	@echo "  install       - Install globally as uv tool (force reinstall)"
 	@echo "  test          - Run unit tests"
 	@echo "  test-coverage - Run tests with coverage report"
 	@echo "  lint          - Run linting checks"
@@ -20,13 +17,9 @@ help:
 	@echo "  clean         - Clean up build artifacts"
 	@echo "  help          - Show this help message"
 
-# Install the package
+# Install the package globally as a tool (force reinstall)
 install:
-	uv pip install -e .
-
-# Install in development mode with test dependencies
-install-dev:
-	uv pip install -e ".[dev]"
+	uv tool install --force --reinstall .
 
 # Run tests
 test:
@@ -74,10 +67,3 @@ clean:
 	find . -type d -name __pycache__ -exec rm -rf {} +
 	find . -type f -name "*.pyc" -delete
 
-# Install the executable globally using uv tool (force reinstall)
-install-tool:
-	uv tool install --force --reinstall .
-
-# Uninstall the tool
-uninstall-tool:
-	uv tool uninstall scrawl2org
