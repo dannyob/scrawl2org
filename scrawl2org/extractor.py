@@ -214,4 +214,3 @@ class ImageExtractor:
             else:
                 # Fallback to raw binary output
                 sys.stdout.buffer.write(image_data)
-

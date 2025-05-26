@@ -104,4 +104,3 @@ class PDFProcessor:
             return pix.tobytes("png")
         finally:
             doc.close()
-

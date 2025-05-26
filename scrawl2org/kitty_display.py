@@ -107,4 +107,3 @@ class KittyImageDisplay:
             filename: Optional filename for display
         """
         KittyImageDisplay.display_image(image_data, filename, width, height)
-

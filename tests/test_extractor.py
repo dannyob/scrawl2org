@@ -230,4 +230,3 @@ def test_output_image_to_kitty_terminal(mock_stderr, mock_kitty_check, mock_disp
     extractor._output_image(b"image data", None, 5)
 
     mock_display.assert_called_once_with(b"image data", "page_5")
-

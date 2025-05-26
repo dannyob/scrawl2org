@@ -108,4 +108,3 @@ def test_display_image_sized(mock_stdout, mock_print):
     written_data = mock_stdout.write.call_args[0][0]
     assert "c=30" in written_data
     assert "r=15" in written_data
-

@@ -179,4 +179,3 @@ def test_extract_page_image_invalid_page(mock_fitz, temp_db_path):
         processor.extract_page_image("dummy.pdf", 5)
 
     mock_doc.close.assert_called_once()
-

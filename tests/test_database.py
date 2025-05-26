@@ -190,4 +190,3 @@ def test_update_page_ocr_text(temp_db, sample_pdf):
     # Retrieve updated OCR text
     retrieved_ocr = temp_db.get_page_ocr_text(pdf_file_id, 0)
     assert retrieved_ocr == ocr_result
-

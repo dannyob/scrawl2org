@@ -1,5 +1,6 @@
 """Main CLI entry point for scrawl2org."""
 
+import os
 from pathlib import Path
 
 import click
@@ -41,6 +42,15 @@ from .processor import PDFProcessor
 @click.option(
     "--height", type=int, help="Display height in terminal cells (Kitty only)"
 )
+@click.option(
+    "--use-llm-ocr", is_flag=True, help="Enable LLM-based OCR for text extraction"
+)
+@click.option(
+    "--llm-model",
+    type=str,
+    default="gemini-1.5-flash-latest",
+    help="LLM model to use for OCR (default: gemini-1.5-flash-latest)",
+)
 def main(
     pdf_file: Path,
     database: str,
@@ -52,6 +62,8 @@ def main(
     no_kitty: bool,
     width: int,
     height: int,
+    use_llm_ocr: bool,
+    llm_model: str,
 ):
     """Extract PDF pages as images and store in SQLite database.
 
@@ -64,11 +76,18 @@ def main(
         scrawl2org document.pdf -e 1 --width 40    # Display with specific width
         scrawl2org document.pdf -e 1 -o page.png  # Extract page 1 to file
         scrawl2org document.pdf -e 1-3 -o pages.png # Extract pages 1-3 to numbered files
+        scrawl2org document.pdf --use-llm-ocr     # Process with LLM-based OCR
+        scrawl2org document.pdf --use-llm-ocr --llm-model claude-3-haiku # Use Claude for OCR
     """
     try:
         if kitty and no_kitty:
             click.echo("Error: Cannot specify both --kitty and --no-kitty", err=True)
             raise click.Abort()
+
+        # Set environment variables for LLM OCR if requested
+        if use_llm_ocr:
+            os.environ["SCRAWL2ORG_USE_LLM_OCR"] = "true"
+            os.environ["SCRAWL2ORG_LLM_MODEL"] = llm_model
 
         if extract:
             # Extract mode - get images from database
@@ -99,4 +118,3 @@ def main(
 
 if __name__ == "__main__":
     main()
-
